@@ -6,18 +6,24 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 RUN micromamba install --yes -c conda-forge \
     python=3.13 \
     git \
+    curl \
     && micromamba clean --all --yes
 
 RUN micromamba install --yes luost26::prexsyn-engine \
     && micromamba clean --all --yes
 
-RUN python -c 'import uuid; print(uuid.uuid4())' > /tmp/my_uuid # Executed at build time, Used to install/setup things
+# Commit: "Update pixi lockfile (#3)""
+ARG PREXSYN_COMMIT=7b1e984
 
-WORKDIR /home/mambauser
-RUN git clone https://github.com/luost26/prexsyn.git
+RUN mkdir -p /home/mambauser/tmp/
+RUN curl -fL "https://github.com/luost26/prexsyn/archive/${PREXSYN_COMMIT}.tar.gz" -o /home/mambauser/tmp/prexsyn.tar.gz
+
+RUN mkdir -p /home/mambauser/prexsyn \
+    && tar -xzf /home/mambauser/tmp/prexsyn.tar.gz -C /home/mambauser/prexsyn --strip-components=1
+
 WORKDIR /home/mambauser/prexsyn
-RUN pip install --no-cache-dir .[dev,eval]
+
+RUN pip install .[dev,eval]
 
 ## Executed at container runtime
 CMD ["python", "--version"] 
-
