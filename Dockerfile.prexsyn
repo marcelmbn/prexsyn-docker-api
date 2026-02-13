@@ -3,16 +3,24 @@ FROM mambaorg/micromamba:2.5.0
 ENV MAMBA_DOCKERFILE_ACTIVATE=1
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
+# -----------------------------
+# 1️⃣ Base dependencies
+# -----------------------------
 RUN micromamba install --yes -c conda-forge \
     python=3.13 \
     git \
     curl \
-    vim \
     && micromamba clean --all --yes
 
+# -----------------------------
+# 2️⃣ Install PrexSyn engine (conda)
+# -----------------------------
 RUN micromamba install --yes luost26::prexsyn-engine \
     && micromamba clean --all --yes
 
+# -----------------------------
+# 4️⃣ Download pinned PrexSyn source
+# -----------------------------
 # Commit: "Update pixi lockfile (#3)""
 ARG PREXSYN_COMMIT=7b1e984
 
@@ -24,7 +32,24 @@ RUN mkdir -p /home/mambauser/prexsyn \
 
 WORKDIR /home/mambauser/prexsyn
 
-RUN pip install .[dev,eval]
+# -----------------------------
+# 5️⃣ Install Python extras
+# -----------------------------
+RUN pip install --no-cache-dir .[dev,eval]
 
-## Executed at container runtime
-CMD ["python", "--version"] 
+# -----------------------------
+# 6️⃣ Download model + chemical space (HuggingFace)
+# -----------------------------
+RUN pip install huggingface_hub
+
+RUN huggingface-cli download \
+    luost26/prexsyn-data \
+    --repo-type dataset \
+    --local-dir data \
+    --local-dir-use-symlinks False
+
+# -----------------------------
+# 7️⃣ Default entrypoint
+# -----------------------------
+ENTRYPOINT ["python"]
+CMD ["--version"]
