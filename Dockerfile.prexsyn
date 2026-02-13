@@ -43,11 +43,7 @@ RUN pip install --no-cache-dir fastapi uvicorn
 # -----------------------------
 RUN pip install huggingface_hub
 
-RUN huggingface-cli download \
-    luost26/prexsyn-data \
-    --repo-type dataset \
-    --local-dir data \
-    --local-dir-use-symlinks False
+RUN python -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='luost26/prexsyn-data', repo_type='dataset', local_dir='data', local_dir_use_symlinks=False, revision='main')"
 
 # -----------------------------
 # 7️⃣ Add API app
